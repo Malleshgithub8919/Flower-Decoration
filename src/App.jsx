@@ -53,6 +53,15 @@ function Arrow() {
   return <span aria-hidden="true">↗</span>;
 }
 
+function WhatsAppIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M20.4 11.8a8.4 8.4 0 0 1-12.4 7.4L4 20l.8-3.9a8.4 8.4 0 1 1 15.6-4.3Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="M9 8.2c-.2-.5-.5-.5-.8-.5h-.6c-.2 0-.6.1-.9.5-.3.3-1.1 1.1-1.1 2.6s1.1 3 1.3 3.2c.2.2 2.2 3.5 5.3 4.7 2.6 1 3.1.8 3.7.7.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.3.2-1.5-.1-.1-.3-.2-.7-.4l-2.1-1c-.3-.1-.5-.2-.7.2l-.9 1.1c-.2.2-.3.3-.7.1-.4-.2-1.5-.6-2.8-1.8-1-.9-1.7-2-1.9-2.4-.2-.4 0-.6.1-.8l.5-.6c.2-.2.2-.4.3-.6.1-.2 0-.4 0-.6L9 8.2Z" fill="currentColor" />
+    </svg>
+  );
+}
+
 function PageLoader({ loading }) {
   if (!loading) return null;
   return (
@@ -152,6 +161,19 @@ function Navbar() {
   const links = [['Home', 'home'], ['About', 'about'], ['Services', 'services'], ['Occasions', 'occasions'], ['Gallery', 'gallery'], ['Process', 'process'], ['Reviews', 'reviews'], ['Contact', 'contact']];
   const closeMenu = () => setMenuOpen(false);
 
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') closeMenu();
+    };
+    document.body.classList.add('mobile-menu-open');
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.classList.remove('mobile-menu-open');
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [menuOpen]);
+
   return (
     <header className={`site-header ${scrolled || menuOpen ? 'is-solid' : ''}`}>
       <div className="nav-shell">
@@ -159,11 +181,15 @@ function Navbar() {
           <span className="brand-flower">✿</span>
           <span className="brand-name">RATNAA<small>Flowers Decoration</small></span>
         </a>
-        <button className={`menu-toggle ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>
+        <a className="whatsapp-header-link" href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="Chat with Ratnaa Flowers Decoration on WhatsApp">
+          <WhatsAppIcon />
+        </a>
+        <button className={`menu-toggle ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} aria-controls="primary-navigation">
           <span /><span /><span />
         </button>
-        <nav className={`main-nav ${menuOpen ? 'nav-open' : ''}`} aria-label="Main navigation">
+        <nav className={`main-nav ${menuOpen ? 'nav-open' : ''}`} id="primary-navigation" aria-label="Main navigation">
           {links.map(([label, id], index) => <a key={id} style={{ '--nav-index': index }} className={active === id ? 'active' : ''} href={`#${id}`} onClick={closeMenu}>{label}</a>)}
+          <a className="mobile-menu-cta" href="#contact" onClick={closeMenu}>Plan Your Event <Arrow /></a>
         </nav>
         <div className="nav-actions">
           <a className="nav-call" href={`tel:${phoneNumber}`}>Call Us</a>
@@ -354,12 +380,12 @@ function Testimonials() {
   const [current, setCurrent] = useState(0);
   const review = testimonials[current];
   const move = (delta) => setCurrent((value) => (value + delta + testimonials.length) % testimonials.length);
-  let touchStart = 0;
+  const touchStart = useRef(0);
   return (
     <section className="reviews section-pad" id="reviews">
       <div className="review-wrap wrap">
         <div className="review-aside"><SectionHeading eyebrow="CLIENT LOVE" title={<>Kind words,<br /><em>lovely memories.</em></>} text="The sweetest part of what we do is hearing how it made you feel." /><div className="review-controls"><button aria-label="Previous review" onClick={() => move(-1)}>←</button><div className="review-dots">{testimonials.map((item, index) => <button aria-label={`Show review ${index + 1}`} className={current === index ? 'current' : ''} key={item[1]} onClick={() => setCurrent(index)} />)}</div><button aria-label="Next review" onClick={() => move(1)}>→</button></div></div>
-        <article key={current} className="review-card" onTouchStart={(event) => { touchStart = event.changedTouches[0].screenX; }} onTouchEnd={(event) => { const delta = touchStart - event.changedTouches[0].screenX; if (Math.abs(delta) > 50) move(delta > 0 ? 1 : -1); }}>
+        <article key={current} className="review-card" aria-live="polite" onTouchStart={(event) => { touchStart.current = event.changedTouches[0].screenX; }} onTouchEnd={(event) => { const delta = touchStart.current - event.changedTouches[0].screenX; if (Math.abs(delta) > 50) move(delta > 0 ? 1 : -1); }}>
           <span className="quote-mark">“</span><div className="review-stars" aria-label="5 out of 5 stars">★★★★★</div><blockquote>{review[0]}</blockquote><div className="review-author"><span className="review-avatar">{review[3]}</span><span><strong>{review[1]}</strong><small>{review[2]}</small></span><span className="review-counter">0{current + 1} / 0{testimonials.length}</span></div>
         </article>
       </div>
@@ -417,8 +443,8 @@ function Contact({ selectedEvent }) {
             <div className="form-title"><span>START A CONVERSATION</span><h3>Tell us about your day.</h3></div>
             <div className="form-grid">
               <label>Full name<input name="name" type="text" placeholder="Your name" autoComplete="name" required /></label>
-              <label>Phone number<input name="phone" type="tel" placeholder="Your phone" autoComplete="tel" pattern="[+]?[0-9 ()-]{10,18}" title="Enter a valid phone number" required /></label>
-              <label>Email address<input name="email" type="email" placeholder="Your email" autoComplete="email" required /></label>
+              <label>Phone number<input name="phone" type="tel" inputMode="tel" placeholder="Your phone" autoComplete="tel" pattern="[+]?[0-9 ()-]{10,18}" title="Enter a valid phone number" required /></label>
+              <label>Email address<input name="email" type="email" inputMode="email" placeholder="Your email" autoComplete="email" required /></label>
               <label>Event type<select name="event" value={eventType} onChange={(event) => setEventType(event.target.value)} required><option value="">Choose an occasion</option>{['Wedding Decoration', 'Reception Decoration', 'Engagement Decoration', 'Birthday Decoration', 'Haldi Decoration', 'Mehendi Decoration', 'Baby Shower Decoration', 'Corporate Event Decoration', 'Other'].map((option) => <option key={option}>{option}</option>)}</select></label>
               <label className="form-wide">Event date<input name="date" type="date" min={new Date().toISOString().split('T')[0]} required /></label>
               <label className="form-wide">Tell us about your event<textarea name="details" placeholder="Describe your dream decoration..." rows="4" /></label>
@@ -440,7 +466,7 @@ function Footer() {
         <div className="footer-brand-col"><a href="#home" className="brand footer-brand"><span className="brand-flower">✿</span><span className="brand-name">RATNAA<small>Flowers Decoration</small></span></a><p>Luxury flower &amp; event decoration crafting beautiful memories for your most precious celebrations.</p><span className="footer-location">RAJAMAHENDRAVARAM, ANDHRA PRADESH</span></div>
         <div className="footer-col"><h3>Quick Links</h3><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#gallery">Gallery</a><a href="#contact">Contact</a></div>
         <div className="footer-col"><h3>Our Services</h3><a href="#services">Wedding Decoration</a><a href="#services">Floral Decoration</a><a href="#services">Reception Decoration</a><a href="#services">Stage Decoration</a></div>
-        <div className="footer-col footer-contact"><h3>Get in Touch</h3><a href={`tel:${phoneNumber}`}>+91 62626 11125</a><a href={`mailto:${emailAddress}`}>{emailAddress}</a><span>Rajamahendravaram, Andhra Pradesh</span><div className="footer-socials">{socials.slice(0, 3).map(([name, href]) => <a key={name} href={href} target="_blank" rel="noreferrer" aria-label={name}>{name.slice(0, 1)}</a>)}<a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="WhatsApp">W</a></div></div>
+        <div className="footer-col footer-contact"><h3>Get in Touch</h3><a href={`tel:${phoneNumber}`}>+91 62626 11125</a><a href={`mailto:${emailAddress}`}>{emailAddress}</a><span>Rajamahendravaram, Andhra Pradesh</span><div className="footer-socials">{socials.slice(0, 3).map(([name, href]) => <a key={name} href={href} target="_blank" rel="noreferrer" aria-label={name}>{name.slice(0, 1)}</a>)}<a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="WhatsApp"><WhatsAppIcon /></a></div></div>
       </div>
       <details className="photo-credits wrap" id="photo-credits">
         <summary>Photo credits &amp; licenses</summary>
@@ -453,7 +479,11 @@ function Footer() {
 }
 
 function FloatingContact() {
-  return <div className="floating-contact"><a href={`tel:${phoneNumber}`} aria-label="Call Ratnaa Flowers Decoration"><span>☎</span><small>Call</small></a><a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="Chat with Ratnaa Flowers Decoration on WhatsApp"><span>◉</span><small>WhatsApp</small></a></div>;
+  return <nav className="floating-contact" aria-label="Quick contact">
+    <a href={`tel:${phoneNumber}`} aria-label="Call Ratnaa Flowers Decoration"><span aria-hidden="true">☎</span><small>Call</small></a>
+    <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="Chat with Ratnaa Flowers Decoration on WhatsApp"><span aria-hidden="true"><WhatsAppIcon /></span><small>WhatsApp</small></a>
+    <a href="#contact" aria-label="Enquire with Ratnaa Flowers Decoration"><span aria-hidden="true">✦</span><small>Enquire</small></a>
+  </nav>;
 }
 
 function Lightbox({ item, index, count, onClose, onMove }) {
