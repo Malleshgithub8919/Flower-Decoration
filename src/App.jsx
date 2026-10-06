@@ -39,9 +39,9 @@ const socials = [
   ['Pinterest', 'https://www.pinterest.com/'],
 ];
 
-function SectionHeading({ eyebrow, title, text, light = false, align = '' }) {
+function SectionHeading({ eyebrow, title, text, light = false, align = '', className = '' }) {
   return (
-    <div className={`section-heading ${align} ${light ? 'heading-light' : ''}`}>
+    <div className={`section-heading ${align} ${light ? 'heading-light' : ''} ${className}`}>
       <span className="eyebrow">{eyebrow}</span>
       <h2>{title}</h2>
       {text && <p>{text}</p>}
@@ -278,15 +278,13 @@ function Stats() {
   return <div className="stats-row" ref={ref}>{['Years Experience', 'Events Decorated', 'Wedding Venues', 'Happy Clients'].map((label, index) => <div className="stat" key={label}><strong>{counts[index]}{index === 3 ? '%' : '+'}</strong><span>{label}</span></div>)}</div>;
 }
 
-function About() {
+function About({ onEnquire }) {
   return (
     <section className="about section-pad" id="about">
       <div className="about-layout wrap">
-        <div className="about-collage">
-          <div className="collage-main"><img src={images.about.main.src} alt={images.about.main.alt} loading="lazy" decoding="async" /></div>
-          <div className="collage-small"><img src={images.about.detail.src} alt={images.about.detail.alt} loading="lazy" decoding="async" /></div>
-          <div className="collage-note"><span>Thoughtfully<br />bloomed</span><i>✿</i></div>
-          <span className="collage-index">R / 2014</span>
+        <div className="about-visual">
+          <img src={images.about.main.src} alt={images.about.main.alt} loading="lazy" decoding="async" />
+          <span className="about-visual-label">DESIGNED AROUND YOUR DAY</span>
         </div>
         <div className="about-copy">
           <SectionHeading eyebrow="OUR STORY" title={<>Creating beautiful spaces<br />with flowers <em>&amp; imagination.</em></>} />
@@ -296,7 +294,36 @@ function About() {
           <Stats />
         </div>
       </div>
+      <div className="about-featured wrap">
+        <SectionHeading eyebrow="OUR SIGNATURE SERVICES" title={<>A few ways to make it <em>unforgettable.</em></>} text="Explore three of the celebrations we love bringing to life." />
+        <div className="featured-services-grid">
+          {images.about.featuredServices.map((service, index) => (
+            <DecorationServiceCard key={service.title} service={service} index={index} onEnquire={onEnquire} featured />
+          ))}
+        </div>
+      </div>
     </section>
+  );
+}
+
+function DecorationServiceCard({ service, index, onEnquire, featured = false }) {
+  return (
+    <article className={`service-card${featured ? ' featured-service-card' : ''}`} style={{ '--card-order': index }}>
+      <a className="service-image" href="#contact" onClick={() => onEnquire(service.title)} aria-label={`Enquire about ${service.title}`}>
+        <img src={service.image.src} alt={service.image.alt} loading="lazy" decoding="async" />
+        <span className="service-number">0{index + 1}</span>
+        <span className="service-arrow"><Arrow /></span>
+      </a>
+      <div className="service-info">
+        <div className="service-meta">
+          <span className="service-icon" aria-hidden="true">{service.icon}</span>
+          <span className="service-category">{service.category}</span>
+        </div>
+        <h3>{service.title}</h3>
+        <p>{service.description}</p>
+        <a className="text-link service-cta" href="#contact" onClick={() => onEnquire(service.title)}>Explore Service <Arrow /></a>
+      </div>
+    </article>
   );
 }
 
@@ -304,15 +331,13 @@ function Services({ onEnquire }) {
   return (
     <section className="services section-pad" id="services">
       <div className="wrap">
-        <SectionHeading eyebrow="WHAT WE OFFER" title={<>Our decoration <em>services.</em></>} text="From grand weddings to intimate celebrations, we craft bespoke floral experiences for every occasion." />
+        <SectionHeading className="services-heading" eyebrow="WHAT WE OFFER" title={<>Our Decoration <em>Services.</em></>} text="Beautiful floral experiences crafted for weddings, celebrations and special occasions." />
         <div className="services-grid">
-          {images.services.map(({ title, description, icon, image: serviceImage }, index) => (
-            <article className="service-card" key={title} style={{ '--card-order': index }}>
-              <a className="service-image" href="#contact" onClick={() => onEnquire(title)} aria-label={`Enquire about ${title}`}><img src={serviceImage.src} alt={serviceImage.alt} loading="lazy" decoding="async" /><span className="service-number">0{index + 1}</span><span className="service-arrow"><Arrow /></span></a>
-              <div className="service-info"><span className="service-icon">{icon}</span><h3>{title}</h3><p>{description}</p><button className="text-link" onClick={() => onEnquire(title)}>Enquire now <Arrow /></button></div>
-            </article>
+          {images.services.map((service, index) => (
+            <DecorationServiceCard key={service.title} service={service} index={index} onEnquire={onEnquire} />
           ))}
         </div>
+        <a href="#contact" className="button button-wine services-cta">Plan Your Decoration <Arrow /></a>
       </div>
     </section>
   );
@@ -445,7 +470,7 @@ function Contact({ selectedEvent }) {
               <label>Full name<input name="name" type="text" placeholder="Your name" autoComplete="name" required /></label>
               <label>Phone number<input name="phone" type="tel" inputMode="tel" placeholder="Your phone" autoComplete="tel" pattern="[+]?[0-9 ()-]{10,18}" title="Enter a valid phone number" required /></label>
               <label>Email address<input name="email" type="email" inputMode="email" placeholder="Your email" autoComplete="email" required /></label>
-              <label>Event type<select name="event" value={eventType} onChange={(event) => setEventType(event.target.value)} required><option value="">Choose an occasion</option>{['Wedding Decoration', 'Reception Decoration', 'Engagement Decoration', 'Birthday Decoration', 'Haldi Decoration', 'Mehendi Decoration', 'Baby Shower Decoration', 'Corporate Event Decoration', 'Other'].map((option) => <option key={option}>{option}</option>)}</select></label>
+              <label>Event type<select name="event" value={eventType} onChange={(event) => setEventType(event.target.value)} required><option value="">Choose an occasion</option>{images.services.map(({ title }) => <option key={title}>{title}</option>)}<option>Other</option></select></label>
               <label className="form-wide">Event date<input name="date" type="date" min={new Date().toISOString().split('T')[0]} required /></label>
               <label className="form-wide">Tell us about your event<textarea name="details" placeholder="Describe your dream decoration..." rows="4" /></label>
             </div>
@@ -526,8 +551,7 @@ export default function App() {
   useEffect(() => {
     const revealTargets = document.querySelectorAll([
       '.section-heading',
-      '.collage-main',
-      '.collage-small',
+      '.about-visual',
       '.about-copy > p',
       '.stats-row',
       '.service-card',
@@ -629,7 +653,7 @@ export default function App() {
     <PageLoader loading={loading} />
     <ScrollProgress />
     <Navbar />
-    <main><Hero /><StudioPromise /><About /><Services onEnquire={enquire} /><WhyRatnaa /><Occasions /><Gallery filter={filter} setFilter={setFilter} filteredGallery={filteredGallery} openLightbox={openLightbox} /><CaseStudy /><Process /><Testimonials /><Callout /><Contact selectedEvent={selectedEvent} /></main>
+    <main><Hero /><StudioPromise /><About onEnquire={enquire} /><Services onEnquire={enquire} /><WhyRatnaa /><Occasions /><Gallery filter={filter} setFilter={setFilter} filteredGallery={filteredGallery} openLightbox={openLightbox} /><CaseStudy /><Process /><Testimonials /><Callout /><Contact selectedEvent={selectedEvent} /></main>
     <Footer /><FloatingContact />
     <Lightbox item={lightboxItem} index={lightboxIndex} count={filteredGallery.length} onClose={() => setLightboxIndex(-1)} onMove={moveLightbox} />
     <PremiumCursor />
